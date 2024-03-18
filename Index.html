@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recipe Box</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+  <link rel="stylesheet" href="./RecipeBox.css">
+  <script src="https://kit.fontawesome.com/705c11baaf.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <!-- Add Recipe Modal -->
+  <div class="modal fade" id="add-new-recipe-modal" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">Add New Recipe
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="add-recipe-modal-body">
+          <select id="source-select" class="form-select m-1">
+            <option value="Pick a source...">Pick a source...</option>
+            <option value="Cook's Illustrated/ATK">Cooks Illustrated/ATK</option>
+            <option value="NYT Cooking">NYT Cooking</option>
+            <option value="manual">New Blank Recipe</option>
+          </select>
+        <div id="new-recipe-form-container">
+        </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="submit-button" class="btn btn-primary" onclick="storeNewRecipe">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Add Recipe Modal -->
+
+  <!-- Add Ingredients to Shopping List Modal -->
+  <div class="modal fade" id="add-ingredients-to-shopping-list-modal" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">Select Ingredients to Add to Shopping List
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body list" id="selection-list">
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="add-selected-ingredients-to-shopping-list-button" class="btn btn-primary" data-listened="false">Add Selected Ingredients to Shopping List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Add ingredients to shopping list Modal -->
+
+  <!-- Edit recipe modal -->
+  <div class="modal fade" id="edit-recipe-modal" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">Edit Recipe
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="edit-recipe-modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="submit-edits-button" class="btn btn-primary">Submit Edits</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Edit Recipe modal  -->
+
+  <!-- View and Edit Shopping List Modal -->
+  <div class="modal fade" id="view-shopping-list-modal" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">Shopping List    
+          <input type="text" id="add-list-item-input" placeholder="Add Item" style="margin-left:20px">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body list" id="shopping-list">
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End view and edit shopping list Modal -->
+
+  <!-- 
+    <button type="button" class="btn btn-secondary" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="Top popover">
+    Popover on top
+  </button>
+  -->
+
+
+
+
+
+  <div class="container-fluid" style="height: 100%">
+   <div class="row" style="height: 100%">
+    <div id="recipe-list-wrap" class="col-4" style="height: 100%">
+      <button id="add-new-recipe-button" class="btn btn-success col-12 m-1" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-new-recipe-modal">+ Add New Recipe</button>
+      <div id="add-new-recipe-container">
+      </div>
+      <input type="text" id="recipe-search" name="recipeSearch" class="col-12 m-1" placeholder="Search Recipe Database...">
+      <ul id="recipe-list" class="col-12 m-2 scrollable-column left-column" >
+      </ul>
+    </div>
+    <div id="spacer" class="col-1"></div>
+    <div id="right-container" class="col-7 scrollable-column right-column">
+      <button id="add-ingredients-to-shopping-list-button" class="btn btn-success col-5 m-1" data-bs-toggle="modal" data-bs-target="#add-ingredients-to-shopping-list-modal">Add Ingredients to Shopping List</button>
+      <button id="view-shopping-list-button" class="btn btn-success col-4 m-1" data-bs-toggle="modal" data-bs-target="#view-shopping-list-modal">View Shopping List</button>
+      <button id="edit-recipe-button" class="btn btn-success col-2 m-1" data-bs-toggle="modal" data-bs-target="#edit-recipe-modal">Edit Recipe</button>
+      <div id="active-recipe">
+      </div>
+    </div>
+   </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+  <script src="RecipeBox.js"></script>
+</body>
+</html>

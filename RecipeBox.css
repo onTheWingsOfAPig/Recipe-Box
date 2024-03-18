@@ -1,0 +1,77 @@
+html, body {
+    height: 100%;
+}
+
+.recipe-list {
+    list-style: none;
+}
+
+.selected-recipe {
+    border-left: 3px green solid;
+    border-top: 3px green solid;
+    border-bottom: 3px rgb(117, 182, 74) solid;
+    border-radius: 5px;
+    margin-right: 40px;
+    padding: 10px;
+}
+
+.scrollable-column {
+    overflow-y: auto;
+    border: 2px solid red;
+}
+
+.left-column {
+    height: 85%;
+}
+
+.right-column {
+    height: 97%;
+    margin-top: 10px;
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background-color: white;
+}
+
+.hover-icon {
+    margin-left: 3px;
+    visibility: hidden;
+    cursor:pointer;
+}
+
+.list p:hover .hover-icon {
+    visibility: visible;
+}
+
+.edit-icon {
+    color:blue;
+}
+
+.delete-icon {
+    color:orangered;
+}
+
+.info-icon {
+    color:green;
+}
+
+.manual-recipe-form-container {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.orangered {
+    color: orangered !important;
+}
+
+.info-popover {
+    --bs-popover-max-width: 200px;
+    --bs-popover-border-color: orange;
+    --bs-popover-header-bg: black;
+    --bs-popover-header-color: white;
+    --bs-popover-body-padding-x: 1rem;
+    --bs-popover-body-padding-y: .5rem;
+  }
