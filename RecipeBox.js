@@ -5,11 +5,30 @@
 // MODAL WITH RADIO BUTTONS TO SELECT WHICH ITEMS TO ADD FROM ACTIVE RECIPE TO SHOPPING LIST
 // FIX SHOPPING LIST CATEGORIES FOR CHICKEN BROTH (NOT MEAT) AND BLACK PEPPER (NOT VEG)
 
+// import { initializeApp } from 'firebase/app';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js'
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCzLEaNT9XP6428X6qePfmIhJ91RLD540k",
+    authDomain: "recipe-box-fb.firebaseapp.com",
+    projectId: "recipe-box-fb",
+    storageBucket: "recipe-box-fb.appspot.com",
+    messagingSenderId: "244688777617",
+    appId: "1:244688777617:web:f8d108c3b6809a4232ea30",
+    measurementId: "G-QV69BLDGYX"
+  };
+
+const app = initializeApp(firebaseConfig);
+// Use the 'app' as needed, e.g., to access Firebase services
+import { getFirestore, collection, getDocs, setDoc, doc } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js';
+const db = getFirestore(app);
+
+
+
 let addRecipeModal = new bootstrap.Modal(document.getElementById("add-new-recipe-modal"));
 let addIngredientsToShoppingListModal = new bootstrap.Modal(document.getElementById("add-ingredients-to-shopping-list-modal"));
 let viewShoppingListModal = new bootstrap.Modal(document.getElementById("view-shopping-list-modal"));
 let editRecipeModal = new bootstrap.Modal(document.getElementById("edit-recipe-modal"));
-
 
 let categoryList = [
   "vegetables",
@@ -223,11 +242,11 @@ const fractions = ["⅛", "¼", "⅜", "½", "⅝", "¾", "⅞", "⅓", "⅔"];
 
 
 
-function Recipe(name, source, url, yield, time, ingredients, instructions) {
+function Recipe(name, source, url, myYield, time, ingredients, instructions) {
   this.name = name;
   this.source = source;
   this.URL = url;
-  this.yield = yield;
+  this.yield = myYield;
   this.time = time;
   this.ingredients = ingredients;
   this.instructions = instructions;
@@ -524,26 +543,26 @@ function handleEditRecipeButtonClick() {
     let name = recipe.name ? recipe.name : "";
     let source = recipe.source ? recipe.source : "";
     let url = recipe.url ? recipe.url : "";
-    let yield = recipe.yield ? recipe.yield : "";
+    let myYield = recipe.yield ? recipe.yield : "";
     let time = recipe.time ? recipe.time : "";
     let ingredients = recipe.ingredients !== [] ? recipe.ingredients : "";
     let instructions = recipe.instructions !== [] ? recipe.instructions : "";
   // make new editing form, transforming arrays to string with line breaks which will become elements of new arrays when form is submitted
-  modalBody.appendChild(createRecipeEditingForm(name, source, url, yield, time, ingredients.join(`\n`), instructions.join(`\n`)));
+  modalBody.appendChild(createRecipeEditingForm(name, source, url, myYield, time, ingredients.join(`\n`), instructions.join(`\n`)));
 }
 
 function handleSubmitEditsButtonClick() {
   let name = document.getElementById("name-field").value;
   let source = document.getElementById("source-field").value;
   let url = document.getElementById("url-field").value;
-  let yield = document.getElementById("yield-field").value;
+  let myYield = document.getElementById("yield-field").value;
   let time = document.getElementById("time-field").value;
   let ingredients = document.getElementById("ingredients-field").value.trim().split(`\n`);
   let instructions = document.getElementById("instructions-field").value.trim().split(`\n`);
   rawRecipes[activeRecipeIndex].name = name;
   rawRecipes[activeRecipeIndex].source = source;
   rawRecipes[activeRecipeIndex].URL = url;
-  rawRecipes[activeRecipeIndex].yield = yield;
+  rawRecipes[activeRecipeIndex].yield = myYield;
   rawRecipes[activeRecipeIndex].time = time;
   rawRecipes[activeRecipeIndex].ingredients = ingredients;
   rawRecipes[activeRecipeIndex].instructions = instructions;
@@ -581,12 +600,12 @@ function refreshNewRecipeForm(source) {
   }
 }
 
-function createRecipeEditingForm(name, source, url, yield, time, ingredients, instructions) {
+function createRecipeEditingForm(name, source, url, myYield, time, ingredients, instructions) {
   let container = document.createElement("div");
   container.appendChild(createInputContainer("Name", "text", name));
   container.appendChild(createInputContainer("Source", "text", source));
   container.appendChild(createInputContainer("URL", "text", url));
-  container.appendChild(createInputContainer("Yield", "text", yield));
+  container.appendChild(createInputContainer("Yield", "text", myYield));
   container.appendChild(createInputContainer("Time", "text", time));
   container.appendChild(createInputContainer("Ingredients", "textarea", ingredients));
   container.appendChild(createInputContainer("Instructions", "textarea", instructions));
@@ -651,7 +670,7 @@ function storeNewRecipe (event) {
     let ingredientsMatch = ingredientsRE.exec(rawText); //[1] is yield [2] is ingredients list
     console.log ('match is:');
     console.log (ingredientsMatch);
-    let yield = ingredientsMatch[1];
+    let myYield = ingredientsMatch[1];
     let ingredientsArr = ingredientsMatch[2]
       .trim()
       .split(`\n    `);
@@ -665,7 +684,7 @@ function storeNewRecipe (event) {
         console.log(`spaced ${spaced}`);
     })
     ingredientsArr = spaced;
-    console.log(yield);
+    console.log(myYield);
     console.log(ingredientsArr);
 
     //get instructions
@@ -680,7 +699,7 @@ function storeNewRecipe (event) {
     }
 
     // put it all in an object and add to rawRecipes and refresh the list
-    let newRecipe = new Recipe(title, source, null, yield, time, ingredientsArr, instructionsArr);
+    let newRecipe = new Recipe(title, source, null, myYield, time, ingredientsArr, instructionsArr);
     console.log(newRecipe);
     rawRecipes.push(newRecipe);
     sendRawRecipesToLocalStorage();
@@ -717,13 +736,13 @@ function storeNewRecipe (event) {
     //get yield 
     let yieldRE = /(?<=SERVES).*/g;
     let yieldMatch = yieldRE.exec(rawText);
-    let yield;
+    let myYield;
     console.log(`yieldMatch is ${yieldMatch}`)
     if (yieldMatch !== null) {
-      yield = "Serves " + yieldMatch[0];
-      console.log(yield);
+      myYield = "Serves " + yieldMatch[0];
+      console.log(myYield);
     } else {
-      yield = "";
+      myYield = "";
     }
     
     // get ingredients
@@ -757,7 +776,7 @@ function storeNewRecipe (event) {
     console.log("instructionsArr", instructionsArr); 
 
     // put it all in an object and add to rawRecipes and refresh the list
-    let newRecipe = new Recipe(title, source, null, yield, time, ingredientsArr, instructionsArr);
+    let newRecipe = new Recipe(title, source, null, myYield, time, ingredientsArr, instructionsArr);
     console.log(newRecipe);
     rawRecipes.push(newRecipe);
     sendRawRecipesToLocalStorage();
@@ -773,7 +792,7 @@ function addRecipeFromManualForm() {
   let name = document.getElementById("name-field").value;
   let source = document.getElementById("source-field").value;
   let url = document.getElementById("url-field").value;
-  let yield = document.getElementById("yield-field").value;
+  let myYield = document.getElementById("yield-field").value;
   let time = document.getElementById("time-field").value;
   let ingredients = document.getElementById("ingredients-field").value.split("\n");
   let instructions = document.getElementById("instructions-field").value.split("\n");
@@ -781,13 +800,13 @@ function addRecipeFromManualForm() {
   name = name.trim() === "" ? undefined : name;
   source = source.trim() === "" ? undefined : source;
   url = url.trim() === "" ? undefined : url;
-  yield = yield.trim() === "" ? undefined : yield;
+  myYield = myYield.trim() === "" ? undefined : myYield;
   time = time.trim() === "" ? undefined : time;
   // remove any empty lines from ingredients and instructions arrays
   ingredients = ingredients.filter(ingredient => ingredient.trim() !== "");
   instructions = instructions.filter(instruction => instruction.trim() !== "");
   // put it all in an object and add to rawRecipes and refresh the list
-  let newRecipe = new Recipe(name, source, url, yield, time, ingredients, instructions);
+  let newRecipe = new Recipe(name, source, url, myYield, time, ingredients, instructions);
   console.log(newRecipe);
   rawRecipes.push(newRecipe);
   sendRawRecipesToLocalStorage();
@@ -863,9 +882,9 @@ function loadRecipe (recipeName) { // Loads recipe details to the right pane whe
 
   //yield (if it exists);
   if (rawRecipes[activeRecipeIndex].yield) {
-    let yield = document.createElement("div");
-    yield.textContent = rawRecipes[activeRecipeIndex].yield;
-    activeRecipeContainer.appendChild(yield);
+    let myYield = document.createElement("div");
+    myYield.textContent = rawRecipes[activeRecipeIndex].yield;
+    activeRecipeContainer.appendChild(myYield);
   } 
 
   //time (if it exists)
@@ -1265,6 +1284,6 @@ function infoShoppingListItem(event) {
   //     html: true
 
 
-function recipeFromScratch() {
-
-}
+  async function storeRecipesInDB() {
+    await setDoc(doc(db, 'recipe-box', 'recipes'), {recipes:rawRecipes});
+  }
