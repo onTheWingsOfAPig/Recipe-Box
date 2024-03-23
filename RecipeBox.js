@@ -5,7 +5,8 @@
 // MODAL WITH RADIO BUTTONS TO SELECT WHICH ITEMS TO ADD FROM ACTIVE RECIPE TO SHOPPING LIST
 // FIX SHOPPING LIST CATEGORIES FOR CHICKEN BROTH (NOT MEAT) AND BLACK PEPPER (NOT VEG)
 
-import { initializeApp } from 'firebase/app';
+// import { initializeApp } from 'firebase/app';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js'
 
 const firebaseConfig = {
     apiKey: "AIzaSyCzLEaNT9XP6428X6qePfmIhJ91RLD540k",
@@ -19,6 +20,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 // Use the 'app' as needed, e.g., to access Firebase services
+import { getFirestore, collection, getDocs, setDoc, doc } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js';
+const db = getFirestore(app);
+
+
 
 let addRecipeModal = new bootstrap.Modal(document.getElementById("add-new-recipe-modal"));
 let addIngredientsToShoppingListModal = new bootstrap.Modal(document.getElementById("add-ingredients-to-shopping-list-modal"));
@@ -1279,6 +1284,6 @@ function infoShoppingListItem(event) {
   //     html: true
 
 
-function recipeFromScratch() {
-
-}
+  async function storeRecipesInDB() {
+    await setDoc(doc(db, 'recipe-box', 'recipes'), {recipes:rawRecipes});
+  }
