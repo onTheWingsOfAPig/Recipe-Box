@@ -362,7 +362,7 @@ async function getRecipesFromDB() {
 }
 
 async function sendRecipesToDB (){
-  await setDoc(doc(db, 'recipe-box', 'recipes-new'), {recipes:rawRecipes});
+  await updateDoc(doc(db, 'recipe-box', 'recipes-new'), {recipes:rawRecipes});
 }
 
 async function sendTestToDB(obj) {
@@ -373,6 +373,7 @@ async function getShoppingListFromDB() {
   let getTestData = await getDoc(doc(db, 'recipe-box', 'recipes-new'))
   console.log(`exists?`, getTestData.exists());
   console.log(getTestData.data());
+  console.log(getTestData.data().shoppingList);
   masterShoppingList = getTestData.data().shoppingList;
 }
 
@@ -1257,8 +1258,8 @@ function createShoppingListItem(text, index) {
 function manualAddItemToShoppingList(text) {
  // function ShoppingListItem(quantity, unit, item, category, originalItem, editedItem, sourceRecipe, deleted, checked) {
     let category = categorizeIngredient(text);
-  let item = new ShoppingListItem(undefined, undefined, undefined, category, text, undefined, "manual", false, false);
-  masterShoppingList.push(item);
+  let item = new ShoppingListItem(null, null, null, category, text, null, "manual", false, false);
+  masterShoppingList.push({...item});
   document.getElementById("add-list-item-input").value = "";
   viewShoppingList();
   updateShoppingListCounter();
