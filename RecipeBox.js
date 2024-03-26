@@ -5,11 +5,53 @@
 // MODAL WITH RADIO BUTTONS TO SELECT WHICH ITEMS TO ADD FROM ACTIVE RECIPE TO SHOPPING LIST
 // FIX SHOPPING LIST CATEGORIES FOR CHICKEN BROTH (NOT MEAT) AND BLACK PEPPER (NOT VEG)
 
+
+
+
+// import { initializeApp } from 'firebase/app';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js'
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCzLEaNT9XP6428X6qePfmIhJ91RLD540k",
+    authDomain: "recipe-box-fb.firebaseapp.com",
+    projectId: "recipe-box-fb",
+    storageBucket: "recipe-box-fb.appspot.com",
+    messagingSenderId: "244688777617",
+    appId: "1:244688777617:web:f8d108c3b6809a4232ea30",
+    measurementId: "G-QV69BLDGYX"
+  };
+
+const app = initializeApp(firebaseConfig);
+// Use the 'app' as needed, e.g., to access Firebase services
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js';
+const db = getFirestore(app);
+
+
+
 let addRecipeModal = new bootstrap.Modal(document.getElementById("add-new-recipe-modal"));
 let addIngredientsToShoppingListModal = new bootstrap.Modal(document.getElementById("add-ingredients-to-shopping-list-modal"));
 let viewShoppingListModal = new bootstrap.Modal(document.getElementById("view-shopping-list-modal"));
 let editRecipeModal = new bootstrap.Modal(document.getElementById("edit-recipe-modal"));
 
+// Declare a global variable for storing the localStorage data
+let rawRecipes;
+
+
+//variables for keeping track of active recipe and shopping list
+let activeRecipeName;
+let activeRecipeIndex;
+let activeIngredientsList;
+let masterShoppingList = [];
+
+//a few global function for testing
+window.sendRecipesToDB = sendRecipesToDB;
+window.getRecipesFromDB = getRecipesFromDB;
+window.removeRecipeFromBox = removeRecipeFromBox;
+window.sendTestToDB = sendTestToDB;
+window.rawRecipesObjRef = {recipes:rawRecipes};
+window.sendShoppingListToDB = sendShoppingListToDB;
+
+// variables for categorizing shopping list items. 
 
 let categoryList = [
   "vegetables",
@@ -19,17 +61,6 @@ let categoryList = [
   "meats",
   "other"
 ]
-
-// Declare a global variable for storing the localStorage data
-let rawRecipes;
-
-//variables for keeping track of active recipe and shopping list
-let activeRecipeName;
-let activeRecipeIndex;
-let activeIngredientsList;
-let masterShoppingList = [];
-
-// variables for categorizing shopping list items. 
 const fruits = [
   "apple",
   "apples",
@@ -181,7 +212,7 @@ const notMeats = [
   "anchovy"
 ];
 
-const dairy = [ //make this a legit category
+const dairy = [ 
   "milk", 
   "Butter", 
   "Margarine", 
@@ -218,16 +249,13 @@ const units = [
   "teaspoon", "teaspoons"
 ];
 
-
 const fractions = ["⅛", "¼", "⅜", "½", "⅝", "¾", "⅞", "⅓", "⅔"];
 
-
-
-function Recipe(name, source, url, yield, time, ingredients, instructions) {
+function Recipe(name, source, url, myYield, time, ingredients, instructions) {
   this.name = name;
   this.source = source;
   this.URL = url;
-  this.yield = yield;
+  this.yield = myYield;
   this.time = time;
   this.ingredients = ingredients;
   this.instructions = instructions;
@@ -254,6 +282,14 @@ document.getElementById("add-new-recipe-button").addEventListener("click", handl
 document.getElementById("edit-recipe-button").addEventListener("click", handleEditRecipeButtonClick);
 document.getElementById("submit-edits-button").addEventListener("click", handleSubmitEditsButtonClick);
 document.getElementById("view-shopping-list-button").addEventListener("click", viewShoppingList);
+document.getElementById("clear-shopping-list-button").addEventListener("click", function(event) {
+  let confirmed = confirm("Clear shopping list? Cannot be undone.");
+  if (confirmed) {
+    clearShoppingList();
+  } else {
+    event.preventDefault();
+  }
+});
 document.getElementById("add-list-item-input").addEventListener("keydown", function(event){
   if (event.key === "Enter") {
     manualAddItemToShoppingList(document.getElementById("add-list-item-input").value)
@@ -299,26 +335,55 @@ listOfLists.forEach((elem) => {
 //   });
 // }
 
-function sendRawRecipesToLocalStorage() {
-  console.log('pressed');
-  console.log(rawRecipes);
-  localStorage.setItem("recipes", JSON.stringify(rawRecipes));
+// function sendRawRecipesToLocalStorage() {
+//   console.log('pressed');
+//   console.log(rawRecipes);
+//   localStorage.setItem("recipes", JSON.stringify(rawRecipes));
+// }
+
+// function getRecipesFromLocalStorage() {
+//   return new Promise((resolve, reject) => {
+//     let storedRecipes = localStorage.getItem("recipes");
+//     if (storedRecipes) {
+//       rawRecipes = (JSON.parse(storedRecipes)); 
+//       console.log(rawRecipes); //returns array
+//       resolve(rawRecipes);
+//     } else {
+//       reject(new Error('Error finding recipes in localStorage'));
+//     }
+//   })
+// }
+
+async function getRecipesFromDB() {
+  let getTestData = await getDoc(doc(db, 'recipe-box', 'recipes-new'))
+  console.log(`exists?`, getTestData.exists());
+  console.log(getTestData.data());
+  rawRecipes = getTestData.data().recipes;
 }
 
-function getRecipesFromLocalStorage() {
-  return new Promise((resolve, reject) => {
-    let storedRecipes = localStorage.getItem("recipes");
-    if (storedRecipes) {
-      rawRecipes = (JSON.parse(storedRecipes)); 
-      console.log(rawRecipes); //returns array
-      resolve(rawRecipes);
-    } else {
-      reject(new Error('Error finding recipes in localStorage'));
-    }
-  })
+async function sendRecipesToDB (){
+  await updateDoc(doc(db, 'recipe-box', 'recipes-new'), {recipes:rawRecipes});
 }
 
-getRecipesFromLocalStorage()
+async function sendTestToDB(obj) {
+  await setDoc(doc(db, 'recipe-box', 'recipes-test'), {recipes:obj});
+}
+
+async function getShoppingListFromDB() {
+  let getTestData = await getDoc(doc(db, 'recipe-box', 'recipes-new'))
+  console.log(`exists?`, getTestData.exists());
+  console.log(getTestData.data());
+  console.log(getTestData.data().shoppingList);
+  masterShoppingList = getTestData.data().shoppingList;
+}
+
+async function sendShoppingListToDB() {
+  await updateDoc(doc(db, 'recipe-box', 'recipes-new'), {shoppingList:masterShoppingList});
+}
+
+
+
+getRecipesFromDB()
   .then((rawRecipes) => {
     // Now that you have the JSON data in rawRecipes, you can perform operations on it
 
@@ -375,6 +440,11 @@ getRecipesFromLocalStorage()
       updateSearchbar();
     })
 }
+
+getShoppingListFromDB()
+  .then (
+    updateShoppingListCounter
+  )
 
 //function addNewRecipe(rawRecipes) {
 //  container = document.getElementById("add-new-recipe-container");
@@ -523,33 +593,36 @@ function handleEditRecipeButtonClick() {
     // prevent undefined info categories from populating "undefined" string in form
     let name = recipe.name ? recipe.name : "";
     let source = recipe.source ? recipe.source : "";
-    let url = recipe.url ? recipe.url : "";
-    let yield = recipe.yield ? recipe.yield : "";
+    let url = recipe.URL ? recipe.URL : "";
+    let myYield = recipe.yield ? recipe.yield : "";
     let time = recipe.time ? recipe.time : "";
     let ingredients = recipe.ingredients !== [] ? recipe.ingredients : "";
     let instructions = recipe.instructions !== [] ? recipe.instructions : "";
   // make new editing form, transforming arrays to string with line breaks which will become elements of new arrays when form is submitted
-  modalBody.appendChild(createRecipeEditingForm(name, source, url, yield, time, ingredients.join(`\n`), instructions.join(`\n`)));
+  modalBody.appendChild(createRecipeEditingForm(name, source, url, myYield, time, ingredients.join(`\n`), instructions.join(`\n`)));
 }
 
 function handleSubmitEditsButtonClick() {
   let name = document.getElementById("name-field").value;
   let source = document.getElementById("source-field").value;
   let url = document.getElementById("url-field").value;
-  let yield = document.getElementById("yield-field").value;
+  let myYield = document.getElementById("yield-field").value;
   let time = document.getElementById("time-field").value;
   let ingredients = document.getElementById("ingredients-field").value.trim().split(`\n`);
+  ingredients = ingredients.filter(elem => elem.trim !== ""); // remove empty lines
   let instructions = document.getElementById("instructions-field").value.trim().split(`\n`);
+  instructions = instructions.filter(elem => elem.trim !== ""); // remove empty lines
   rawRecipes[activeRecipeIndex].name = name;
   rawRecipes[activeRecipeIndex].source = source;
   rawRecipes[activeRecipeIndex].URL = url;
-  rawRecipes[activeRecipeIndex].yield = yield;
+  rawRecipes[activeRecipeIndex].yield = myYield;
   rawRecipes[activeRecipeIndex].time = time;
   rawRecipes[activeRecipeIndex].ingredients = ingredients;
   rawRecipes[activeRecipeIndex].instructions = instructions;
-  sendRawRecipesToLocalStorage();
+  //sendRawRecipesToLocalStorage();
   loadRecipe(rawRecipes[activeRecipeIndex].name);
   displayRecipeList();
+  sendRecipesToDB();
   editRecipeModal.hide();
 }
 
@@ -581,12 +654,12 @@ function refreshNewRecipeForm(source) {
   }
 }
 
-function createRecipeEditingForm(name, source, url, yield, time, ingredients, instructions) {
+function createRecipeEditingForm(name, source, url, myYield, time, ingredients, instructions) {
   let container = document.createElement("div");
   container.appendChild(createInputContainer("Name", "text", name));
   container.appendChild(createInputContainer("Source", "text", source));
   container.appendChild(createInputContainer("URL", "text", url));
-  container.appendChild(createInputContainer("Yield", "text", yield));
+  container.appendChild(createInputContainer("Yield", "text", myYield));
   container.appendChild(createInputContainer("Time", "text", time));
   container.appendChild(createInputContainer("Ingredients", "textarea", ingredients));
   container.appendChild(createInputContainer("Instructions", "textarea", instructions));
@@ -651,7 +724,7 @@ function storeNewRecipe (event) {
     let ingredientsMatch = ingredientsRE.exec(rawText); //[1] is yield [2] is ingredients list
     console.log ('match is:');
     console.log (ingredientsMatch);
-    let yield = ingredientsMatch[1];
+    let myYield = ingredientsMatch[1];
     let ingredientsArr = ingredientsMatch[2]
       .trim()
       .split(`\n    `);
@@ -665,7 +738,7 @@ function storeNewRecipe (event) {
         console.log(`spaced ${spaced}`);
     })
     ingredientsArr = spaced;
-    console.log(yield);
+    console.log(myYield);
     console.log(ingredientsArr);
 
     //get instructions
@@ -680,12 +753,13 @@ function storeNewRecipe (event) {
     }
 
     // put it all in an object and add to rawRecipes and refresh the list
-    let newRecipe = new Recipe(title, source, null, yield, time, ingredientsArr, instructionsArr);
+    let newRecipe = new Recipe(title, source, null, myYield, time, ingredientsArr, instructionsArr);
     console.log(newRecipe);
-    rawRecipes.push(newRecipe);
-    sendRawRecipesToLocalStorage();
+    rawRecipes.push({...newRecipe});
+    //sendRawRecipesToLocalStorage();
     displayRecipeList();
     loadRecipe(newRecipe.name);
+    sendRecipesToDB();
 
 
   } else if (source === "Cook's Illustrated/ATK") {
@@ -717,13 +791,13 @@ function storeNewRecipe (event) {
     //get yield 
     let yieldRE = /(?<=SERVES).*/g;
     let yieldMatch = yieldRE.exec(rawText);
-    let yield;
+    let myYield;
     console.log(`yieldMatch is ${yieldMatch}`)
     if (yieldMatch !== null) {
-      yield = "Serves " + yieldMatch[0];
-      console.log(yield);
+      myYield = "Serves " + yieldMatch[0];
+      console.log(myYield);
     } else {
-      yield = "";
+      myYield = "";
     }
     
     // get ingredients
@@ -757,12 +831,13 @@ function storeNewRecipe (event) {
     console.log("instructionsArr", instructionsArr); 
 
     // put it all in an object and add to rawRecipes and refresh the list
-    let newRecipe = new Recipe(title, source, null, yield, time, ingredientsArr, instructionsArr);
+    let newRecipe = new Recipe(title, source, null, myYield, time, ingredientsArr, instructionsArr);
     console.log(newRecipe);
-    rawRecipes.push(newRecipe);
-    sendRawRecipesToLocalStorage();
+    rawRecipes.push({...newRecipe});
+    //sendRawRecipesToLocalStorage();
     displayRecipeList();
     loadRecipe(newRecipe.name);
+    sendRecipesToDB();
   };
   addRecipeModal.hide();
   updateSearchbar();
@@ -773,26 +848,29 @@ function addRecipeFromManualForm() {
   let name = document.getElementById("name-field").value;
   let source = document.getElementById("source-field").value;
   let url = document.getElementById("url-field").value;
-  let yield = document.getElementById("yield-field").value;
+  let myYield = document.getElementById("yield-field").value;
   let time = document.getElementById("time-field").value;
   let ingredients = document.getElementById("ingredients-field").value.split("\n");
   let instructions = document.getElementById("instructions-field").value.split("\n");
   // ternary operators to assign undefined to any empty fields
-  name = name.trim() === "" ? undefined : name;
-  source = source.trim() === "" ? undefined : source;
-  url = url.trim() === "" ? undefined : url;
-  yield = yield.trim() === "" ? undefined : yield;
-  time = time.trim() === "" ? undefined : time;
+  name = name.trim() === "" ? null : name;
+  source = source.trim() === "" ? null : source;
+  url = url.trim() === "" ? null : url;
+  myYield = myYield.trim() === "" ? null : myYield;
+  time = time.trim() === "" ? null : time;
   // remove any empty lines from ingredients and instructions arrays
   ingredients = ingredients.filter(ingredient => ingredient.trim() !== "");
   instructions = instructions.filter(instruction => instruction.trim() !== "");
   // put it all in an object and add to rawRecipes and refresh the list
-  let newRecipe = new Recipe(name, source, url, yield, time, ingredients, instructions);
+  let newRecipe = new Recipe(name, source, url, myYield, time, ingredients, instructions);
   console.log(newRecipe);
-  rawRecipes.push(newRecipe);
-  sendRawRecipesToLocalStorage();
+  console.log({...newRecipe});
+  rawRecipes.push({...newRecipe});
+  //sendRawRecipesToLocalStorage();
   displayRecipeList();
   loadRecipe(newRecipe.name);
+  //storeNewRecipe();
+  sendRecipesToDB();
 }
 
 function replaceASCII(str) {
@@ -850,7 +928,7 @@ function loadRecipe (recipeName) { // Loads recipe details to the right pane whe
   //source (make it a link if there is a URL)
   if (rawRecipes[activeRecipeIndex].source) {let source = document.createElement("div");
     if (rawRecipes[activeRecipeIndex].URL) {
-      sourceLink = document.createElement("a");
+      let sourceLink = document.createElement("a");
       sourceLink.href = rawRecipes[activeRecipeIndex].URL;
       sourceLink.textContent = rawRecipes[activeRecipeIndex].source;
       source.textContent = "Source: "
@@ -863,9 +941,9 @@ function loadRecipe (recipeName) { // Loads recipe details to the right pane whe
 
   //yield (if it exists);
   if (rawRecipes[activeRecipeIndex].yield) {
-    let yield = document.createElement("div");
-    yield.textContent = rawRecipes[activeRecipeIndex].yield;
-    activeRecipeContainer.appendChild(yield);
+    let myYield = document.createElement("div");
+    myYield.textContent = rawRecipes[activeRecipeIndex].yield;
+    activeRecipeContainer.appendChild(myYield);
   } 
 
   //time (if it exists)
@@ -914,10 +992,10 @@ function removeRecipeFromBox(name) {
   rawRecipes = rawRecipes.filter(function(elem) {
     return elem.name !== name;
   });
-  sendRawRecipesToLocalStorage();
+  //sendRawRecipesToLocalStorage();
   displayRecipeList();
   updateSearchbar();
-  updateShoppingListCounter();
+  sendRecipesToDB();
 }
 
 
@@ -995,7 +1073,7 @@ function addIngredientsToShoppingList() {
     let originalItem = ingredient;
     let sourceRecipe = activeRecipeName;
     let category = categorizeIngredient (ingredient);
-    let item = new ShoppingListItem(undefined, undefined, undefined, category, originalItem, undefined, sourceRecipe, false, false);
+    let item = new ShoppingListItem(null, null, null, category, originalItem, null, sourceRecipe, false, false);
     preSelectionList.push(item);
   }
   selectItemsToSendToShoppingList(preSelectionList);
@@ -1059,7 +1137,6 @@ function addSelectedIngredientsToShoppingList(preSelectionList) {
   let list = document.querySelectorAll("#selection-list .list-item");
   //console.log(list);
   list.forEach((elem) => {
-    trimmedItem = elem.textContent.trim(); // remove whitespace added at beginning
     //console.log(`trimmed item:`, trimmedItem);
     if (elem.children[0].checked) { //is the check box checked?
       //match textContent of elem with originalItem in preSelectionList array and send it to the master shopping list. 
@@ -1069,7 +1146,7 @@ function addSelectedIngredientsToShoppingList(preSelectionList) {
       console.log(`index`, index)
       console.log(`MSL`, masterShoppingList.slice()) //THIS ONE HAS AN ITEM FROM EACH RECIPE PREVIOUSLY ADDED AT [INDEX] CURRENTLY BEING ADDED.  IF IT DOESN'T EXIST, UNDEFINED IS ADDED
       console.log(`pushing:`, preSelectionList[index]);
-      masterShoppingList.push(preSelectionList[index]);
+      masterShoppingList.push({...preSelectionList[index]}); //spread to new object--this strips the custom object identity so firestore will store it
       console.log(`MSL`, masterShoppingList);
     } else {
       //console.log(`not a checked item`);
@@ -1078,10 +1155,11 @@ function addSelectedIngredientsToShoppingList(preSelectionList) {
   //console.log(masterShoppingList);
   addIngredientsToShoppingListModal.hide();
   updateShoppingListCounter();
+  sendShoppingListToDB();
 }
 
 function updateShoppingListCounter() {
-  arrWithoutDeleted = masterShoppingList.filter(elem => elem.deleted !== true);
+  let arrWithoutDeleted = masterShoppingList.filter(elem => elem.deleted !== true);
   let shoppingListQuantity = arrWithoutDeleted.length;
   let shoppingListButton = document.getElementById("view-shopping-list-button");
   shoppingListButton.textContent = `View shopping list (${shoppingListQuantity} items)`;
@@ -1180,11 +1258,12 @@ function createShoppingListItem(text, index) {
 function manualAddItemToShoppingList(text) {
  // function ShoppingListItem(quantity, unit, item, category, originalItem, editedItem, sourceRecipe, deleted, checked) {
     let category = categorizeIngredient(text);
-  let item = new ShoppingListItem(undefined, undefined, undefined, category, text, undefined, "manual", false, false);
-  masterShoppingList.push(item);
+  let item = new ShoppingListItem(null, null, null, category, text, null, "manual", false, false);
+  masterShoppingList.push({...item});
   document.getElementById("add-list-item-input").value = "";
   viewShoppingList();
   updateShoppingListCounter();
+  sendShoppingListToDB();
 }
 
 function editShoppingListItem(event) {
@@ -1233,6 +1312,7 @@ function deleteShoppingListItem(event) {
   masterShoppingList[index].deleted = true;
   viewShoppingList(); // refreshes the shopping list
   updateShoppingListCounter();
+  sendShoppingListToDB();
 }
 
 function infoShoppingListItem(event) {
@@ -1264,7 +1344,11 @@ function infoShoppingListItem(event) {
   //     content: itemInfoHTML,
   //     html: true
 
+  function clearShoppingList() {
+    masterShoppingList = [];
+    document.getElementById("shopping-list").innerHTML = "";
+    updateShoppingListCounter();
+    sendShoppingListToDB();
+  }
 
-function recipeFromScratch() {
 
-}
